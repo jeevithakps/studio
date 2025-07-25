@@ -117,16 +117,18 @@ export default function ChecklistsPage() {
   const handleCreateChecklist = () => {
     if (!newChecklistTitle.trim()) return;
 
+    const newItemsForChecklist: ChecklistItem[] = newChecklistItems
+      .filter((item) => item.trim() !== '')
+      .map((item, index) => ({
+        id: `item-${Date.now()}-${index}`,
+        name: item,
+      }));
+
     const newChecklist: Checklist = {
       id: `cl-${Date.now()}`,
       title: newChecklistTitle,
       description: newChecklistDesc,
-      items: newChecklistItems
-        .filter((item) => item.trim() !== '')
-        .map((item, index) => ({
-          id: `item-${Date.now()}-${index}`,
-          name: item,
-        })),
+      items: newItemsForChecklist,
     };
     
     checklistsData.push(newChecklist);

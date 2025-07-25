@@ -1,3 +1,7 @@
+
+'use client';
+
+import { useState } from 'react';
 import { MoreHorizontal, Tag } from "lucide-react";
 import {
   Table,
@@ -23,10 +27,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { allItems } from "@/lib/data";
+import { allItems, type Item } from "@/lib/data";
 
 export default function Home() {
-  const items = allItems;
+  const [items, setItems] = useState<Item[]>(allItems);
+
+  // This is a temporary solution to re-sync state since we are not using a proper state manager.
+  // In a real app, you'd use a state management library or context.
+  useState(() => {
+    const interval = setInterval(() => {
+      if (items.length !== allItems.length) {
+        setItems([...allItems]);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  });
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -95,3 +111,4 @@ export default function Home() {
     </div>
   );
 }
+
