@@ -1,13 +1,14 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Edit } from 'lucide-react';
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -30,36 +31,80 @@ import { Textarea } from '@/components/ui/textarea';
 
 export default function ProfilesPage() {
   const [allProfiles, setAllProfiles] = useState<Profile[]>(profiles);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
 
+  // State for new profile
   const [newProfileName, setNewProfileName] = useState('');
   const [newProfileRole, setNewProfileRole] = useState('');
   const [newProfileRoutine, setNewProfileRoutine] = useState('');
   const [newProfileEssentials, setNewProfileEssentials] = useState<string[]>(['']);
 
-  const handleEssentialItemChange = (index: number, value: string) => {
-    const updatedItems = [...newProfileEssentials];
-    updatedItems[index] = value;
-    setNewProfileEssentials(updatedItems);
-  };
+  // State for editing profile
+  const [editProfileName, setEditProfileName] = useState('');
+  const [editProfileRole, setEditProfileRole] = useState('');
+  const [editProfileRoutine, setEditProfileRoutine] = useState('');
+  const [editProfileEssentials, setEditProfileEssentials] = useState<string[]>(['']);
 
-  const handleAddEssentialItem = () => {
-    setNewProfileEssentials([...newProfileEssentials, '']);
-  };
+  useEffect(() => {
+    if (editingProfile) {
+      setEditProfileName(editingProfile.name);
+      setEditProfileRole(editingProfile.role);
+      setEditProfileRoutine(editingProfile.routine);
+      setEditProfileEssentials(editingProfile.essentials.length > 0 ? editingProfile.essentials : ['']);
+    }
+  }, [editingProfile]);
 
-  const handleRemoveEssentialItem = (index: number) => {
-    if (newProfileEssentials.length > 1) {
-      const updatedItems = newProfileEssentials.filter((_, i) => i !== index);
+  const handleEssentialItemChange = (index: number, value: string, isEdit: boolean) => {
+    if (isEdit) {
+      const updatedItems = [...editProfileEssentials];
+      updatedItems[index] = value;
+      setEditProfileEssentials(updatedItems);
+    } else {
+      const updatedItems = [...newProfileEssentials];
+      updatedItems[index] = value;
       setNewProfileEssentials(updatedItems);
     }
   };
 
-  const resetForm = () => {
+  const handleAddEssentialItem = (isEdit: boolean) => {
+    if (isEdit) {
+      setEditProfileEssentials([...editProfileEssentials, '']);
+    } else {
+      setNewProfileEssentials([...newProfileEssentials, '']);
+    }
+  };
+
+  const handleRemoveEssentialItem = (index: number, isEdit: boolean) => {
+    if (isEdit) {
+        if (editProfileEssentials.length > 1) {
+            const updatedItems = editProfileEssentials.filter((_, i) => i !== index);
+            setEditProfileEssentials(updatedItems);
+        }
+    } else {
+        if (newProfileEssentials.length > 1) {
+            const updatedItems = newProfileEssentials.filter((_, i) => i !== index);
+            setNewProfileEssentials(updatedItems);
+        }
+    }
+  };
+
+  const resetAddForm = () => {
     setNewProfileName('');
     setNewProfileRole('');
     setNewProfileRoutine('');
     setNewProfileEssentials(['']);
   };
+  
+  const resetEditForm = () => {
+    setEditingProfile(null);
+    setEditProfileName('');
+    setEditProfileRole('');
+    setEditProfileRoutine('');
+    setEditProfileEssentials(['']);
+  }
 
   const handleAddProfile = () => {
     if (!newProfileName.trim() || !newProfileRole.trim()) return;
@@ -75,8 +120,34 @@ export default function ProfilesPage() {
 
     profiles.push(newProfile);
     setAllProfiles([...profiles]);
-    resetForm();
-    setIsDialogOpen(false);
+    resetAddForm();
+    setIsAddDialogOpen(false);
+  };
+  
+  const handleOpenEditDialog = (profile: Profile) => {
+    setEditingProfile(profile);
+    setIsEditDialogOpen(true);
+  };
+  
+  const handleUpdateProfile = () => {
+    if (!editingProfile || !editProfileName.trim() || !editProfileRole.trim()) return;
+
+    const updatedProfile: Profile = {
+      ...editingProfile,
+      name: editProfileName,
+      role: editProfileRole,
+      routine: editProfileRoutine,
+      essentials: editProfileEssentials.filter((item) => item.trim() !== ''),
+    };
+
+    const profileIndex = profiles.findIndex(p => p.id === editingProfile.id);
+    if (profileIndex !== -1) {
+      profiles[profileIndex] = updatedProfile;
+      setAllProfiles([...profiles]);
+    }
+    
+    resetEditForm();
+    setIsEditDialogOpen(false);
   };
 
   return (
@@ -111,14 +182,20 @@ export default function ProfilesPage() {
                 ))}
               </ul>
             </CardContent>
+            <CardFooter>
+              <Button variant="outline" className="w-full" onClick={() => handleOpenEditDialog(profile)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Profile
+              </Button>
+            </CardFooter>
           </Card>
         ))}
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Card
               className="flex items-center justify-center border-dashed cursor-pointer hover:border-primary hover:text-primary transition-colors"
-              onClick={() => setIsDialogOpen(true)}
+              onClick={() => setIsAddDialogOpen(true)}
             >
               <div className="text-center text-muted-foreground">
                 <Plus className="mx-auto h-8 w-8" />
@@ -177,13 +254,13 @@ export default function ProfilesPage() {
                     <div key={index} className="flex items-center gap-2">
                       <Input
                         value={item}
-                        onChange={(e) => handleEssentialItemChange(index, e.target.value)}
+                        onChange={(e) => handleEssentialItemChange(index, e.target.value, false)}
                         placeholder={`Item ${index + 1}`}
                       />
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveEssentialItem(index)}
+                        onClick={() => handleRemoveEssentialItem(index, false)}
                         disabled={newProfileEssentials.length <= 1}
                       >
                         <X className="h-4 w-4" />
@@ -191,20 +268,98 @@ export default function ProfilesPage() {
                     </div>
                   ))}
                 </div>
-                <Button variant="outline" size="sm" onClick={handleAddEssentialItem} className="mt-2">
+                <Button variant="outline" size="sm" onClick={() => handleAddEssentialItem(false)} className="mt-2">
                   <Plus className="mr-2 h-4 w-4" /> Add Item
                 </Button>
               </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" onClick={resetForm}>Cancel</Button>
+                <Button variant="outline" onClick={resetAddForm}>Cancel</Button>
               </DialogClose>
               <Button onClick={handleAddProfile}>Add Profile</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
+      
+      {/* Edit Profile Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>
+              Update the details for {editingProfile?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="edit-name"
+                value={editProfileName}
+                onChange={(e) => setEditProfileName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-role" className="text-right">
+                Role
+              </Label>
+              <Input
+                id="edit-role"
+                value={editProfileRole}
+                onChange={(e) => setEditProfileRole(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-routine" className="text-right">
+                Routine
+              </Label>
+              <Textarea
+                id="edit-routine"
+                value={editProfileRoutine}
+                onChange={(e) => setEditProfileRoutine(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div>
+              <Label className="mb-2 block">Essential Items</Label>
+              <div className="flex flex-col gap-2">
+                {editProfileEssentials.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      value={item}
+                      onChange={(e) => handleEssentialItemChange(index, e.target.value, true)}
+                      placeholder={`Item ${index + 1}`}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveEssentialItem(index, true)}
+                      disabled={editProfileEssentials.length <= 1}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button variant="outline" size="sm" onClick={() => handleAddEssentialItem(true)} className="mt-2">
+                <Plus className="mr-2 h-4 w-4" /> Add Item
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+                <Button variant="outline" onClick={resetEditForm}>Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleUpdateProfile}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
