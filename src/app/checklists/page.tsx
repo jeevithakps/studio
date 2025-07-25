@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { checklistsData, type Checklist, type ChecklistItem, allItems, profiles, type Item } from '@/lib/data';
+import { checklistsData, type Checklist, type ChecklistItem, allItems, profiles, type Item, history, type HistoryItem } from '@/lib/data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,8 +88,55 @@ export default function ChecklistsPage() {
         title: "Checklist Complete!",
         description: `You've completed the "${list.title}" checklist.`,
       })
+      // Optional: clear checks on completion
+      const newCheckedItems = { ...checkedItems };
+      list.items.forEach(item => {
+        delete newCheckedItems[`${list.id}-${item.id}`];
+      });
+      setCheckedItems(newCheckedItems);
     }
   };
+
+  const handleMarkAsMisplaced = () => {
+    if (!activeChecklistId) return;
+    const list = checklists.find((c) => c.id === activeChecklistId);
+    if (!list) return;
+
+    const uncheckedItems = list.items.filter(
+      (item) => !checkedItems[`${activeChecklistId}-${item.id}`]
+    );
+
+    let itemsMarkedCount = 0;
+    uncheckedItems.forEach((uncheckedItem) => {
+      const mainItem = allItems.find((item) => item.id === uncheckedItem.id);
+      if (mainItem && mainItem.status !== 'Misplaced') {
+        mainItem.status = 'Misplaced';
+        itemsMarkedCount++;
+        
+        // Add to history
+        const historyEntry: HistoryItem = {
+          id: `h-${Date.now()}-${mainItem.id}`,
+          date: new Date().toISOString(),
+          item: mainItem.name,
+          user: mainItem.owner, // Or a generic user if not applicable
+          location: mainItem.location, // Location where it was last seen
+          status: 'Misplaced',
+        };
+        history.unshift(historyEntry);
+      }
+    });
+
+    if (itemsMarkedCount > 0) {
+      toast({
+        title: "Items Updated",
+        description: `${itemsMarkedCount} item(s) have been marked as misplaced and updated on the dashboard.`,
+      });
+    }
+
+    setIsAlertOpen(false);
+    setActiveChecklistId(null);
+  };
+
 
   const getUncheckedItemsCount = (checklistId: string) => {
     const list = checklists.find((c) => c.id === checklistId);
@@ -392,7 +439,7 @@ export default function ChecklistsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Go Back</AlertDialogCancel>
-            <AlertDialogAction>Mark as Misplaced</AlertDialogAction>
+            <AlertDialogAction onClick={handleMarkAsMisplaced}>Mark as Misplaced</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
