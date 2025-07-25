@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from "@/hooks/use-toast";
 
 export default function ChecklistsPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(checklistsData);
@@ -51,6 +52,8 @@ export default function ChecklistsPage() {
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
   const [newItemText, setNewItemText] = useState('');
   const [editingChecklistId, setEditingChecklistId] = useState<string | null>(null);
+
+  const { toast } = useToast();
 
   const handleCheckboxChange = (checklistId: string, itemId: string) => {
     const key = `${checklistId}-${itemId}`;
@@ -69,8 +72,10 @@ export default function ChecklistsPage() {
       setActiveChecklistId(checklistId);
       setIsAlertOpen(true);
     } else {
-      // Handle successful completion
-      alert(`${list.title} completed!`);
+      toast({
+        title: "Checklist Complete!",
+        description: `You've completed the "${list.title}" checklist.`,
+      })
     }
   };
 
