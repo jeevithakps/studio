@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -13,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { checklistsData, type Checklist, type ChecklistItem } from '@/lib/data';
+import { checklistsData, type Checklist, type ChecklistItem, allItems, profiles, type Item } from '@/lib/data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 
 export default function ChecklistsPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(checklistsData);
@@ -51,6 +60,9 @@ export default function ChecklistsPage() {
 
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
   const [newItemText, setNewItemText] = useState('');
+  const [newItemOwner, setNewItemOwner] = useState('');
+  const [newItemLocation, setNewItemLocation] = useState('');
+  const [newItemStatus, setNewItemStatus] = useState<'In Place' | 'Misplaced'>('In Place');
   const [editingChecklistId, setEditingChecklistId] = useState<string | null>(null);
 
   const { toast } = useToast();
@@ -135,20 +147,41 @@ export default function ChecklistsPage() {
   };
   
   const handleConfirmAddItem = () => {
-    if (!newItemText.trim() || !editingChecklistId) return;
+    if (!newItemText.trim() || !editingChecklistId || !newItemOwner.trim() || !newItemLocation.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please fill out all fields for the new item.",
+      });
+      return;
+    }
     
     const list = checklistsData.find(list => list.id === editingChecklistId);
 
     if (list) {
-        const newItem: ChecklistItem = {
-            id: `item-${Date.now()}`,
+        const newItemId = `item-${Date.now()}`;
+        const newChecklistItem: ChecklistItem = {
+            id: newItemId,
             name: newItemText,
         };
-        list.items.push(newItem);
+        list.items.push(newChecklistItem);
         setChecklists([...checklistsData]);
+
+        const newDashboardItem: Item = {
+          id: newItemId,
+          name: newItemText,
+          owner: newItemOwner,
+          location: newItemLocation,
+          status: newItemStatus,
+          hasTag: false, 
+        };
+        allItems.push(newDashboardItem);
     }
   
     setNewItemText('');
+    setNewItemOwner('');
+    setNewItemLocation('');
+    setNewItemStatus('In Place');
     setEditingChecklistId(null);
     setIsAddItemDialogOpen(false);
   };
@@ -285,21 +318,61 @@ export default function ChecklistsPage() {
           <DialogHeader>
             <DialogTitle>Add New Item</DialogTitle>
             <DialogDescription>
-              Enter the name of the new item you want to add to the checklist.
+              Enter the details for the new item to add to the checklist and dashboard.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <Label htmlFor="new-item-name">Item Name</Label>
-            <Input
-              id="new-item-name"
-              value={newItemText}
-              onChange={(e) => setNewItemText(e.target.value)}
-              placeholder="e.g., Sunscreen"
-            />
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-item-name" className="text-right">Name</Label>
+              <Input
+                id="new-item-name"
+                value={newItemText}
+                onChange={(e) => setNewItemText(e.target.value)}
+                placeholder="e.g., Sunscreen"
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-item-owner" className="text-right">Owner</Label>
+               <Select onValueChange={setNewItemOwner} value={newItemOwner}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select an owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles.map((p) => (
+                    <SelectItem key={p.id} value={p.name}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-item-location" className="text-right">Location</Label>
+              <Input
+                id="new-item-location"
+                value={newItemLocation}
+                onChange={(e) => setNewItemLocation(e.target.value)}
+                placeholder="e.g., Bathroom cabinet"
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="new-item-status" className="text-right">Status</Label>
+                <Select onValueChange={(value) => setNewItemStatus(value as 'In Place' | 'Misplaced')} value={newItemStatus}>
+                    <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="In Place">In Place</SelectItem>
+                        <SelectItem value="Misplaced">Misplaced</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" onClick={() => setIsAddItemDialogOpen(false)}>Cancel</Button>
             </DialogClose>
             <Button onClick={handleConfirmAddItem}>Add Item</Button>
           </DialogFooter>
