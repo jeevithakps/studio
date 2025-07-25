@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MoreHorizontal, Tag, Plus, MapPin, CheckCircle } from "lucide-react";
+import { MoreHorizontal, Tag, Plus, MapPin, CheckCircle, Edit2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -58,7 +58,12 @@ type RoutineCheck = {
 
 function LocationVerification() {
   const [pendingChecks, setPendingChecks] = useState<RoutineCheck[]>([]);
-  const [confirmedItems, setConfirmedItems] = useState<Record<string, string[]>>({});
+  const [verifiedItems, setVerifiedItems] = useState<string[]>([]);
+  
+  const [isUpdateLocationDialogOpen, setIsUpdateLocationDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [newLocation, setNewLocation] = useState('');
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -90,64 +95,119 @@ function LocationVerification() {
     setPendingChecks(newPendingChecks);
   }, []);
   
-  const handleConfirmItem = (profileId: string, itemName: string) => {
-    setConfirmedItems(prev => {
-      const userConfirmed = prev[profileId] || [];
-      const updated = { ...prev, [profileId]: [...userConfirmed, itemName] };
+  const handleConfirmItem = (itemId: string) => {
+    const item = allItems.find(i => i.id === itemId);
+    if (item) {
+        item.status = 'In Place';
+    }
+    setVerifiedItems(prev => [...prev, itemId]);
+  };
 
-      const profile = profiles.find(p => p.id === profileId);
-      if (profile && profile.essentials.every(item => updated[profileId].includes(item))) {
-        toast({
-          title: `All items verified for ${profile.name}!`,
-          description: "Thank you for keeping everything up-to-date.",
-        });
-        // Filter out the completed profile check
-        setPendingChecks(currentChecks => currentChecks.filter(check => check.profile.id !== profileId));
-      }
+  const handleOpenUpdateDialog = (itemId: string) => {
+    const itemToEdit = allItems.find(i => i.id === itemId);
+    if (itemToEdit) {
+      setEditingItem(itemToEdit);
+      setNewLocation(itemToEdit.location);
+      setIsUpdateLocationDialogOpen(true);
+    }
+  };
 
-      return updated;
+  const handleUpdateLocation = () => {
+    if (!editingItem || !newLocation.trim()) return;
+    
+    const itemIndex = allItems.findIndex(i => i.id === editingItem.id);
+    if (itemIndex > -1) {
+      allItems[itemIndex].location = newLocation;
+      allItems[itemIndex].status = 'In Place';
+    }
+
+    toast({
+        title: "Location Updated!",
+        description: `The location for ${editingItem.name} has been set to ${newLocation}.`
     });
+
+    setVerifiedItems(prev => [...prev, editingItem.id]);
+    setIsUpdateLocationDialogOpen(false);
+    setEditingItem(null);
+    setNewLocation('');
   };
   
-  if (pendingChecks.length === 0) return null;
+  const activeChecks = pendingChecks.filter(check => {
+      const essentialItems = allItems.filter(item => check.profile.essentials.includes(item.name));
+      const unverifiedItems = essentialItems.filter(item => !verifiedItems.includes(item.id));
+      return unverifiedItems.length > 0;
+  });
+
+  if (activeChecks.length === 0) return null;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {pendingChecks.map(({ profile }) => (
-        <Card key={profile.id} className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="text-blue-500"/>
-              Location Check for {profile.name}
-            </CardTitle>
-            <CardDescription>
-              It looks like {profile.name} has returned. Please confirm the location of their essential items.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-             {profile.essentials.map(item => {
-                const isConfirmed = confirmedItems[profile.id]?.includes(item);
-                return (
-                  <div key={item} className="flex justify-between items-center bg-background/50 p-3 rounded-md">
-                    <span className="font-medium">{item}</span>
-                    <Button 
-                      size="sm"
-                      onClick={() => handleConfirmItem(profile.id, item)}
-                      disabled={isConfirmed}
-                    >
-                      {isConfirmed ? (
-                        <>
-                          <CheckCircle className="mr-2 h-4 w-4"/> Confirmed
-                        </>
-                      ) : 'Confirm'}
-                    </Button>
-                  </div>
-                )
-             })}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="grid gap-4 md:grid-cols-2">
+        {activeChecks.map(({ profile }) => {
+            const essentialItemsForProfile = allItems.filter(item => profile.essentials.includes(item.name));
+            const unverifiedItems = essentialItemsForProfile.filter(item => !verifiedItems.includes(item.id));
+            if (unverifiedItems.length === 0) return null;
+
+            return (
+                <Card key={profile.id} className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                    <MapPin className="text-blue-500"/>
+                    Location Check for {profile.name}
+                    </CardTitle>
+                    <CardDescription>
+                    {profile.name} has returned. Please verify or update the location of their essential items.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                    {unverifiedItems.map(item => (
+                    <div key={item.id} className="flex justify-between items-center bg-background/50 p-3 rounded-md">
+                        <div>
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-sm text-muted-foreground">Last seen: {item.location}</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => handleConfirmItem(item.id)}>
+                                <CheckCircle className="mr-2 h-4 w-4"/> Correct
+                            </Button>
+                            <Button size="sm" onClick={() => handleOpenUpdateDialog(item.id)}>
+                                <Edit2 className="mr-2 h-4 w-4"/> Update
+                            </Button>
+                        </div>
+                    </div>
+                    ))}
+                </CardContent>
+                </Card>
+            )
+        })}
+      </div>
+      
+      <Dialog open={isUpdateLocationDialogOpen} onOpenChange={setIsUpdateLocationDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Update Location for {editingItem?.name}</DialogTitle>
+                <DialogDescription>
+                    Where is this item now?
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <Label htmlFor="new-location">New Location</Label>
+              <Input 
+                id="new-location"
+                value={newLocation}
+                onChange={(e) => setNewLocation(e.target.value)}
+                placeholder="e.g., Kitchen Counter"
+              />
+            </div>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button onClick={handleUpdateLocation}>Save Location</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
@@ -347,3 +407,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
