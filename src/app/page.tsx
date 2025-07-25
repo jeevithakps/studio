@@ -66,6 +66,8 @@ function LocationVerification() {
 
   const { toast } = useToast();
 
+  const uniqueLocations = [...new Set(allItems.map(item => item.location))];
+
   useEffect(() => {
     const now = new Date();
     const newPendingChecks: RoutineCheck[] = [];
@@ -192,12 +194,18 @@ function LocationVerification() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <Label htmlFor="new-location">New Location</Label>
-              <Input 
-                id="new-location"
-                value={newLocation}
-                onChange={(e) => setNewLocation(e.target.value)}
-                placeholder="e.g., Kitchen Counter"
-              />
+              <Select onValueChange={setNewLocation} value={newLocation}>
+                  <SelectTrigger id="new-location">
+                    <SelectValue placeholder="Select a location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueLocations.map((location) => (
+                      <SelectItem key={location} value={location}>
+                        {location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+              </Select>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
@@ -407,5 +415,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
