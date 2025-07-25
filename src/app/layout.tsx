@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Home, ListTodo, Users, History, Sparkles, Bell } from 'lucide-react';
+import { Home, ListTodo, Users, History, Sparkles, Bell, CalendarClock } from 'lucide-react';
 
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset } from '@/components/ui/sidebar';
@@ -40,6 +40,14 @@ export default function RootLayout({
                     <SidebarMenuButton tooltip="Dashboard">
                       <Home />
                       <span>Dashboard</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+                 <SidebarMenuItem>
+                  <Link href="/agenda" passHref>
+                    <SidebarMenuButton tooltip="Agenda">
+                      <CalendarClock />
+                      <span>Agenda</span>
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>

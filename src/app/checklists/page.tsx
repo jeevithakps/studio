@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, X, Edit } from 'lucide-react';
+import { Plus, X, Edit, Clock } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -56,6 +56,7 @@ export default function ToDoPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newChecklistTitle, setNewChecklistTitle] = useState('');
   const [newChecklistDesc, setNewChecklistDesc] = useState('');
+  const [newChecklistTime, setNewChecklistTime] = useState('');
   const [newChecklistItems, setNewChecklistItems] = useState<string[]>(['']);
 
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
@@ -69,6 +70,7 @@ export default function ToDoPage() {
   const [editingChecklist, setEditingChecklist] = useState<Checklist | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDesc, setEditDesc] = useState('');
+  const [editTime, setEditTime] = useState('');
   const [editItems, setEditItems] = useState<ChecklistItem[]>([]);
 
   const { toast } = useToast();
@@ -77,6 +79,7 @@ export default function ToDoPage() {
     if (editingChecklist) {
       setEditTitle(editingChecklist.title);
       setEditDesc(editingChecklist.description);
+      setEditTime(editingChecklist.time || '');
       setEditItems([...editingChecklist.items]);
     }
   }, [editingChecklist]);
@@ -189,6 +192,7 @@ export default function ToDoPage() {
       title: newChecklistTitle,
       description: newChecklistDesc,
       items: newItemsForChecklist,
+      time: newChecklistTime || undefined,
     };
     
     checklistsData.push(newChecklist);
@@ -200,6 +204,7 @@ export default function ToDoPage() {
   const resetCreateForm = () => {
     setNewChecklistTitle('');
     setNewChecklistDesc('');
+    setNewChecklistTime('');
     setNewChecklistItems(['']);
   };
 
@@ -260,6 +265,7 @@ export default function ToDoPage() {
       ...editingChecklist,
       title: editTitle,
       description: editDesc,
+      time: editTime || undefined,
       items: editItems.filter(item => item.name.trim() !== '')
     };
     
@@ -305,6 +311,12 @@ export default function ToDoPage() {
                 <div>
                   <CardTitle>{list.title}</CardTitle>
                   <CardDescription>{list.description}</CardDescription>
+                  {list.time && (
+                    <div className="flex items-center text-sm text-muted-foreground mt-2">
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span>{list.time}</span>
+                    </div>
+                  )}
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(list)}>
                     <Edit className="h-4 w-4" />
@@ -384,6 +396,18 @@ export default function ToDoPage() {
                   onChange={(e) => setNewChecklistDesc(e.target.value)}
                   className="col-span-3"
                   placeholder="A short description of the to-do list."
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="time" className="text-right">
+                  Time
+                </Label>
+                <Input
+                    id="time"
+                    type="time"
+                    value={newChecklistTime}
+                    onChange={(e) => setNewChecklistTime(e.target.value)}
+                    className="col-span-3"
                 />
               </div>
               <div>
@@ -519,6 +543,18 @@ export default function ToDoPage() {
                 className="col-span-3"
               />
             </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-time" className="text-right">
+                  Time
+                </Label>
+                <Input
+                    id="edit-time"
+                    type="time"
+                    value={editTime}
+                    onChange={(e) => setEditTime(e.target.value)}
+                    className="col-span-3"
+                />
+              </div>
             <div>
               <Label className="mb-2 block">Required Items</Label>
               <div className="flex flex-col gap-2">
@@ -570,5 +606,3 @@ export default function ToDoPage() {
     </div>
   );
 }
-
-    

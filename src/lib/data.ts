@@ -28,6 +28,7 @@ export type Checklist = {
   title: string;
   description: string;
   items: ChecklistItem[];
+  time?: string; // Format HH:mm
 };
 
 export type HistoryItem = {
@@ -175,7 +176,8 @@ export const checklistsData: Checklist[] = [
             { id: 'item-4', name: 'Lunch Box' },
             { id: 'item-x1', name: 'Water Bottle' },
             { id: 'item-x2', name: 'Homework Folder' },
-        ]
+        ],
+        time: '07:15',
     },
     {
         id: 'cl-2',
@@ -186,7 +188,8 @@ export const checklistsData: Checklist[] = [
             { id: 'item-2', name: 'Car Keys' },
             { id: 'item-y1', name: 'Office ID' },
             { id: 'item-y2', name: 'Wallet' },
-        ]
+        ],
+        time: '08:30',
     },
     {
         id: 'cl-3',
@@ -196,7 +199,17 @@ export const checklistsData: Checklist[] = [
             { id: 'item-5', name: 'Reading Glasses' },
             { id: 'item-z1', name: 'House Keys' },
             { id: 'item-z2', name: 'Light Jacket' },
-        ]
+        ],
+        time: '17:00'
+    },
+    {
+        id: 'cl-4',
+        title: 'Review Homework',
+        description: 'Check Leo\'s homework.',
+        items: [
+            { id: 'item-x2', name: 'Homework Folder' }
+        ],
+        time: '19:00',
     }
 ];
 
