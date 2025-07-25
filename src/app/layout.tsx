@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Home, CheckSquare, Users, History, Sparkles } from 'lucide-react';
 
 import './globals.css';
@@ -35,34 +36,44 @@ export default function RootLayout({
             <SidebarContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton href="/" tooltip="Dashboard">
-                    <Home />
-                    <span>Dashboard</span>
-                  </SidebarMenuButton>
+                  <Link href="/" passHref>
+                    <SidebarMenuButton tooltip="Dashboard">
+                      <Home />
+                      <span>Dashboard</span>
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton href="/checklists" tooltip="Checklists">
-                    <CheckSquare />
-                    <span>Checklists</span>
-                  </SidebarMenuButton>
+                  <Link href="/checklists" passHref>
+                    <SidebarMenuButton tooltip="Checklists">
+                      <CheckSquare />
+                      <span>Checklists</span>
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton href="/profiles" tooltip="Profiles">
-                    <Users />
-                    <span>Profiles</span>
-                  </SidebarMenuButton>
+                  <Link href="/profiles" passHref>
+                    <SidebarMenuButton tooltip="Profiles">
+                      <Users />
+                      <span>Profiles</span>
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton href="/history" tooltip="History">
-                    <History />
-                    <span>History</span>
-                  </SidebarMenuButton>
+                  <Link href="/history" passHref>
+                    <SidebarMenuButton tooltip="History">
+                      <History />
+                      <span>History</span>
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton href="/predict-location" tooltip="Predict Location">
-                    <Sparkles />
-                    <span>Predict Location</span>
-                  </SidebarMenuButton>
+                  <Link href="/predict-location" passHref>
+                    <SidebarMenuButton tooltip="Predict Location">
+                      <Sparkles />
+                      <span>Predict Location</span>
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarContent>
