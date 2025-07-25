@@ -43,10 +43,17 @@ export default function AgendaPage() {
             if (upcoming) {
                 const profile = profiles.find(p => p.essentials.some(e => upcoming.items.some(i => i.name === e))) || profiles[0];
                 if(profile){
+                    const itemsWithLocations = upcoming.items.map(taskItem => {
+                        const itemDetails = allItems.find(item => item.id === taskItem.id);
+                        return `${taskItem.name} (${itemDetails?.location || 'Unknown'})`;
+                    }).join(', ');
+
+                    const suggestion = `It's almost time for "${upcoming.title}". Get your items ready: ${itemsWithLocations}.`;
+
                     const reminder: Reminder = {
                         profileName: profile.name,
                         title: `Upcoming Task: ${upcoming.title}`,
-                        suggestion: `It's almost time for "${upcoming.title}". Get your items ready!`
+                        suggestion: suggestion
                     };
                     setUpcomingTask(reminder);
                 }
