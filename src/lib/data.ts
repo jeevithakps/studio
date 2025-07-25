@@ -28,6 +28,13 @@ export type Checklist = {
   title: string;
   description: string;
   items: ChecklistItem[];
+};
+
+export type ToDo = {
+  id: string;
+  title: string;
+  description: string;
+  items: ChecklistItem[];
   time?: string; // Format HH:mm
 };
 
@@ -166,9 +173,9 @@ export const allItems: Item[] = [
   },
 ];
 
-export const checklistsData: Checklist[] = [
+export const todosData: ToDo[] = [
     {
-        id: 'cl-1',
+        id: 'todo-1',
         title: 'Morning School Run',
         description: "For Leo before he leaves for school.",
         items: [
@@ -180,7 +187,7 @@ export const checklistsData: Checklist[] = [
         time: '07:15',
     },
     {
-        id: 'cl-2',
+        id: 'todo-2',
         title: 'Work Departure',
         description: "For Alex before leaving for the office.",
         items: [
@@ -192,7 +199,7 @@ export const checklistsData: Checklist[] = [
         time: '08:30',
     },
     {
-        id: 'cl-3',
+        id: 'todo-3',
         title: 'Evening Walk',
         description: "For Grandma May's evening stroll.",
         items: [
@@ -203,7 +210,7 @@ export const checklistsData: Checklist[] = [
         time: '17:00'
     },
     {
-        id: 'cl-4',
+        id: 'todo-4',
         title: 'Review Homework',
         description: 'Check Leo\'s homework.',
         items: [
@@ -212,6 +219,21 @@ export const checklistsData: Checklist[] = [
         time: '19:00',
     }
 ];
+
+export const checklistsData: Checklist[] = [
+    {
+        id: 'cl-1',
+        title: 'Weekend Picnic',
+        description: 'Things to pack for the family picnic.',
+        items: [
+            { id: 'item-x1', name: 'Water Bottle'},
+            { id: 'item-4', name: 'Lunch Box'},
+            { id: 'new-1', name: 'Picnic Blanket'},
+            { id: 'new-2', name: 'Sunscreen'},
+        ]
+    }
+];
+
 
 export const history: HistoryItem[] = [
     {

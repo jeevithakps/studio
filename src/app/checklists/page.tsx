@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, X, Edit, Clock } from 'lucide-react';
+import { Plus, X, Edit } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -47,7 +47,7 @@ import {
 } from '@/components/ui/select';
 
 
-export default function ToDoPage() {
+export default function ChecklistsPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(checklistsData);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -56,7 +56,6 @@ export default function ToDoPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newChecklistTitle, setNewChecklistTitle] = useState('');
   const [newChecklistDesc, setNewChecklistDesc] = useState('');
-  const [newChecklistTime, setNewChecklistTime] = useState('');
   const [newChecklistItems, setNewChecklistItems] = useState<string[]>(['']);
 
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
@@ -70,7 +69,6 @@ export default function ToDoPage() {
   const [editingChecklist, setEditingChecklist] = useState<Checklist | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDesc, setEditDesc] = useState('');
-  const [editTime, setEditTime] = useState('');
   const [editItems, setEditItems] = useState<ChecklistItem[]>([]);
 
   const { toast } = useToast();
@@ -79,10 +77,17 @@ export default function ToDoPage() {
     if (editingChecklist) {
       setEditTitle(editingChecklist.title);
       setEditDesc(editingChecklist.description);
-      setEditTime(editingChecklist.time || '');
       setEditItems([...editingChecklist.items]);
     }
   }, [editingChecklist]);
+  
+  // Sync with global data
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setChecklists([...checklistsData]);
+    }, 500);
+    return () => clearInterval(interval);
+  });
 
   const handleCheckboxChange = (checklistId: string, itemId: string) => {
     const key = `${checklistId}-${itemId}`;
@@ -102,10 +107,9 @@ export default function ToDoPage() {
       setIsAlertOpen(true);
     } else {
       toast({
-        title: "To-Do List Complete!",
-        description: `You've completed the "${list.title}" list.`,
+        title: "Checklist Complete!",
+        description: `You've checked all items for "${list.title}".`,
       })
-      // Optional: clear checks on completion
       const newCheckedItems = { ...checkedItems };
       list.items.forEach(item => {
         delete newCheckedItems[`${list.id}-${item.id}`];
@@ -181,18 +185,17 @@ export default function ToDoPage() {
     if (!newChecklistTitle.trim()) return;
 
     const newItemsForChecklist: ChecklistItem[] = newChecklistItems
-      .filter((item) => item.trim() !== '')
-      .map((item, index) => ({
-        id: `item-${Date.now()}-${index}`,
-        name: item,
-      }));
+      .map((itemName) => {
+        const existingItem = allItems.find(i => i.name.toLowerCase() === itemName.toLowerCase().trim());
+        return existingItem ? { id: existingItem.id, name: existingItem.name } : { id: `item-${Date.now()}-${itemName}`, name: itemName.trim() };
+      })
+      .filter(item => item.name.length > 0);
 
     const newChecklist: Checklist = {
       id: `cl-${Date.now()}`,
       title: newChecklistTitle,
       description: newChecklistDesc,
       items: newItemsForChecklist,
-      time: newChecklistTime || undefined,
     };
     
     checklistsData.push(newChecklist);
@@ -204,7 +207,6 @@ export default function ToDoPage() {
   const resetCreateForm = () => {
     setNewChecklistTitle('');
     setNewChecklistDesc('');
-    setNewChecklistTime('');
     setNewChecklistItems(['']);
   };
 
@@ -265,7 +267,6 @@ export default function ToDoPage() {
       ...editingChecklist,
       title: editTitle,
       description: editDesc,
-      time: editTime || undefined,
       items: editItems.filter(item => item.name.trim() !== '')
     };
     
@@ -297,9 +298,9 @@ export default function ToDoPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight font-headline">To-Do Lists</h1>
+        <h1 className="text-3xl font-bold tracking-tight font-headline">Checklists</h1>
         <p className="text-muted-foreground">
-          Create and manage tasks, and get smart reminders.
+          Create and manage lists of items for trips, tasks, or events.
         </p>
       </header>
 
@@ -311,12 +312,6 @@ export default function ToDoPage() {
                 <div>
                   <CardTitle>{list.title}</CardTitle>
                   <CardDescription>{list.description}</CardDescription>
-                  {list.time && (
-                    <div className="flex items-center text-sm text-muted-foreground mt-2">
-                        <Clock className="h-4 w-4 mr-1" />
-                        <span>{list.time}</span>
-                    </div>
-                  )}
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(list)}>
                     <Edit className="h-4 w-4" />
@@ -362,15 +357,15 @@ export default function ToDoPage() {
             >
               <div className="text-center text-muted-foreground">
                 <Plus className="mx-auto h-8 w-8" />
-                <p className="mt-2 font-semibold">Create New To-Do List</p>
+                <p className="mt-2 font-semibold">Create New Checklist</p>
               </div>
             </Card>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Create New To-Do List</DialogTitle>
+              <DialogTitle>Create New Checklist</DialogTitle>
               <DialogDescription>
-                Fill in the details for your new to-do list below.
+                Fill in the details for your new checklist below.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -383,7 +378,7 @@ export default function ToDoPage() {
                   value={newChecklistTitle}
                   onChange={(e) => setNewChecklistTitle(e.target.value)}
                   className="col-span-3"
-                  placeholder="e.g., Weekend Trip"
+                  placeholder="e.g., Weekend Picnic"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -395,19 +390,7 @@ export default function ToDoPage() {
                   value={newChecklistDesc}
                   onChange={(e) => setNewChecklistDesc(e.target.value)}
                   className="col-span-3"
-                  placeholder="A short description of the to-do list."
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="time" className="text-right">
-                  Time
-                </Label>
-                <Input
-                    id="time"
-                    type="time"
-                    value={newChecklistTime}
-                    onChange={(e) => setNewChecklistTime(e.target.value)}
-                    className="col-span-3"
+                  placeholder="A short description of the checklist."
                 />
               </div>
               <div>
@@ -515,9 +498,9 @@ export default function ToDoPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Edit To-Do List</DialogTitle>
+            <DialogTitle>Edit Checklist</DialogTitle>
             <DialogDescription>
-              Update the details for your to-do list.
+              Update the details for your checklist.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -543,20 +526,8 @@ export default function ToDoPage() {
                 className="col-span-3"
               />
             </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-time" className="text-right">
-                  Time
-                </Label>
-                <Input
-                    id="edit-time"
-                    type="time"
-                    value={editTime}
-                    onChange={(e) => setEditTime(e.target.value)}
-                    className="col-span-3"
-                />
-              </div>
             <div>
-              <Label className="mb-2 block">Required Items</Label>
+              <Label className="mb-2 block">Checklist Items</Label>
               <div className="flex flex-col gap-2">
                 {editItems.map((item, index) => (
                   <div key={item.id} className="flex items-center gap-2">
