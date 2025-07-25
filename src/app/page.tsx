@@ -15,6 +15,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -57,6 +58,7 @@ type RoutineCheck = {
 
 function LocationVerification() {
   const [pendingChecks, setPendingChecks] = useState<RoutineCheck[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
     const now = new Date();
