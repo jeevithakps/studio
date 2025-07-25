@@ -16,12 +16,22 @@ export default function AgendaPage() {
     const [upcomingTask, setUpcomingTask] = useState<Reminder | null>(null);
     const { toast } = useToast();
 
+    // This is a temporary solution to re-sync state since we are not using a proper state manager.
+    // In a real app, you'd use a state management library or context.
+    const [checklists, setChecklists] = useState(checklistsData);
+    useEffect(() => {
+        const interval = setInterval(() => {
+        setChecklists([...checklistsData]);
+        }, 500);
+        return () => clearInterval(interval);
+    });
+
     useEffect(() => {
         const checkUpcomingTasks = () => {
             const now = new Date();
             const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60 * 1000);
 
-            const upcoming = checklistsData.find(task => {
+            const upcoming = checklists.find(task => {
                 if (!task.time) return false;
                 const [hours, minutes] = task.time.split(':').map(Number);
                 const taskTime = new Date();
@@ -31,9 +41,7 @@ export default function AgendaPage() {
             });
 
             if (upcoming) {
-                // For simplicity, we'll just show the first upcoming task.
-                // In a real app, you might handle multiple.
-                const profile = profiles.find(p => p.essentials.some(e => upcoming.items.some(i => i.name === e)));
+                const profile = profiles.find(p => p.essentials.some(e => upcoming.items.some(i => i.name === e))) || profiles[0];
                 if(profile){
                     const reminder: Reminder = {
                         profileName: profile.name,
@@ -51,14 +59,14 @@ export default function AgendaPage() {
         const interval = setInterval(checkUpcomingTasks, 60000); // Check every minute
 
         return () => clearInterval(interval);
-    }, []);
+    }, [checklists]);
 
     const handleGenerateReminders = async () => {
         setIsLoading(true);
         setReminders([]); 
         
         try {
-            const reminderPromises = checklistsData.map(task => {
+            const reminderPromises = checklists.map(task => {
                 // Find a relevant profile - simplistic logic for now
                 const profile = profiles.find(p => p.essentials.some(e => task.items.some(i => i.name === e))) || profiles[0];
                 return getTaskReminders({
