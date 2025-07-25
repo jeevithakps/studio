@@ -6,6 +6,7 @@
  *   routines, essential items, and the current state of tracked items.
  *
  * - generateReminders - A function that handles the reminder generation process.
+ * - generateTaskReminders - A function that handles task-based reminder generation.
  */
 
 import { ai } from '@/ai/genkit';
@@ -14,9 +15,13 @@ import {
   GenerateRemindersOutputSchema,
   type GenerateRemindersInput,
   type GenerateRemindersOutput,
+  GenerateTaskRemindersInputSchema,
+  GenerateTaskRemindersOutputSchema,
+  type GenerateTaskRemindersInput,
+  type GenerateTaskRemindersOutput,
 } from './schemas';
 
-export { type GenerateRemindersInput, type GenerateRemindersOutput, type Reminder } from './schemas';
+export { type GenerateRemindersInput, type GenerateRemindersOutput, type Reminder, type GenerateTaskRemindersInput, type GenerateTaskRemindersOutput } from './schemas';
 
 export async function generateReminders(
   input: GenerateRemindersInput
@@ -24,7 +29,13 @@ export async function generateReminders(
   return generateRemindersFlow(input);
 }
 
-const prompt = ai.definePrompt({
+export async function generateTaskReminders(
+  input: GenerateTaskRemindersInput
+): Promise<GenerateTaskRemindersOutput> {
+    return generateTaskRemindersFlow(input);
+}
+
+const remindersPrompt = ai.definePrompt({
   name: 'generateRemindersPrompt',
   input: { schema: GenerateRemindersInputSchema },
   output: { schema: GenerateRemindersOutputSchema },
@@ -57,6 +68,34 @@ Generate the response in JSON format according to the GenerateRemindersOutputSch
 `,
 });
 
+const taskRemindersPrompt = ai.definePrompt({
+    name: 'generateTaskRemindersPrompt',
+    input: { schema: GenerateTaskRemindersInputSchema },
+    output: { schema: GenerateTaskRemindersOutputSchema },
+    prompt: `You are an AI assistant in a household management app called HomeKeep. Your task is to generate a helpful, proactive reminder for a user about a specific task.
+
+Current Time: {{currentTime}}
+
+User Profile:
+- **{{profile.name}} ({{profile.role}}):**
+  - Routine: {{profile.routine}}
+
+Task to Remind:
+- **Title:** {{task.title}}
+- **Description:** {{task.description}}
+- **Required Items:**
+  {{#each task.items}}
+  - {{name}} (Last known location: {{lookup ../items name 'location'}})
+  {{/each}}
+
+Generate a single, clear, and actionable reminder for the user to complete the task. The reminder should mention the required items and their last known locations to be helpful.
+
+Example: "Time to review homework, {{profile.name}}. Your notes are in the Study Room."
+
+Generate the response in JSON format according to the GenerateRemindersOutputSchema. The output should contain a single reminder.
+`,
+});
+
 const generateRemindersFlow = ai.defineFlow(
   {
     name: 'generateRemindersFlow',
@@ -64,7 +103,19 @@ const generateRemindersFlow = ai.defineFlow(
     outputSchema: GenerateRemindersOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
+    const { output } = await remindersPrompt(input);
     return output!;
   }
+);
+
+const generateTaskRemindersFlow = ai.defineFlow(
+    {
+      name: 'generateTaskRemindersFlow',
+      inputSchema: GenerateTaskRemindersInputSchema,
+      outputSchema: GenerateTaskRemindersOutputSchema,
+    },
+    async (input) => {
+      const { output } = await taskRemindersPrompt(input);
+      return output!;
+    }
 );

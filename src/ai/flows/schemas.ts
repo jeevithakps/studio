@@ -47,6 +47,31 @@ export type GenerateRemindersOutput = z.infer<
   typeof GenerateRemindersOutputSchema
 >;
 
+const ChecklistItemSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+});
+
+const ChecklistSchema = z.object({
+    id: z.string(),
+    title: z.string(),
+    description: z.string(),
+    items: z.array(ChecklistItemSchema),
+});
+
+export const GenerateTaskRemindersInputSchema = z.object({
+    profile: ProfileSchema,
+    task: ChecklistSchema,
+    items: z.array(ItemSchema), // All items to look up locations
+    currentTime: z.string().describe('The current time in ISO format.'),
+});
+export type GenerateTaskRemindersInput = z.infer<typeof GenerateTaskRemindersInputSchema>;
+
+export const GenerateTaskRemindersOutputSchema = z.object({
+    reminders: z.array(ReminderSchema),
+});
+export type GenerateTaskRemindersOutput = z.infer<typeof GenerateTaskRemindersOutputSchema>;
+
 
 // Schemas for predict-location flow
 export const PredictLocationInputSchema = z.object({

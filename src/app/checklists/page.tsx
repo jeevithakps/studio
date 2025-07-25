@@ -47,7 +47,7 @@ import {
 } from '@/components/ui/select';
 
 
-export default function ChecklistsPage() {
+export default function ToDoPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(checklistsData);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -85,8 +85,8 @@ export default function ChecklistsPage() {
       setIsAlertOpen(true);
     } else {
       toast({
-        title: "Checklist Complete!",
-        description: `You've completed the "${list.title}" checklist.`,
+        title: "To-Do List Complete!",
+        description: `You've completed the "${list.title}" list.`,
       })
       // Optional: clear checks on completion
       const newCheckedItems = { ...checkedItems };
@@ -238,9 +238,9 @@ export default function ChecklistsPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Smart Checklists</h1>
+        <h1 className="text-3xl font-bold tracking-tight font-headline">To-Do Lists</h1>
         <p className="text-muted-foreground">
-          Customizable checklists to ensure you never forget a thing.
+          Create and manage tasks, and get smart reminders.
         </p>
       </header>
 
@@ -290,15 +290,15 @@ export default function ChecklistsPage() {
             >
               <div className="text-center text-muted-foreground">
                 <Plus className="mx-auto h-8 w-8" />
-                <p className="mt-2 font-semibold">Create New Checklist</p>
+                <p className="mt-2 font-semibold">Create New To-Do List</p>
               </div>
             </Card>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Create New Checklist</DialogTitle>
+              <DialogTitle>Create New To-Do List</DialogTitle>
               <DialogDescription>
-                Fill in the details for your new checklist below.
+                Fill in the details for your new to-do list below.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -323,11 +323,11 @@ export default function ChecklistsPage() {
                   value={newChecklistDesc}
                   onChange={(e) => setNewChecklistDesc(e.target.value)}
                   className="col-span-3"
-                  placeholder="A short description of the checklist."
+                  placeholder="A short description of the to-do list."
                 />
               </div>
               <div>
-                <Label className="mb-2 block">Checklist Items</Label>
+                <Label className="mb-2 block">Required Items</Label>
                 <div className="flex flex-col gap-2">
                   {newChecklistItems.map((item, index) => (
                     <div key={index} className="flex items-center gap-2">
@@ -356,7 +356,7 @@ export default function ChecklistsPage() {
               <DialogClose asChild>
                 <Button variant="outline" onClick={resetCreateForm}>Cancel</Button>
               </DialogClose>
-              <Button onClick={handleCreateChecklist}>Create Checklist</Button>
+              <Button onClick={handleCreateChecklist}>Create List</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -367,7 +367,7 @@ export default function ChecklistsPage() {
           <DialogHeader>
             <DialogTitle>Add New Item</DialogTitle>
             <DialogDescription>
-              Enter the details for the new item to add to the checklist and dashboard.
+              Enter the details for the new item to add to the list and dashboard.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
