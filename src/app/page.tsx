@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreHorizontal, Tag } from "lucide-react";
+import { MoreHorizontal, Tag, Plus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -27,21 +27,79 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { allItems, type Item } from "@/lib/data";
+import { allItems, type Item, profiles } from "@/lib/data";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from "@/hooks/use-toast";
+
 
 export default function Home() {
   const [items, setItems] = useState<Item[]>(allItems);
+  const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemOwner, setNewItemOwner] = useState('');
+  const [newItemLocation, setNewItemLocation] = useState('');
+  const [newItemStatus, setNewItemStatus] = useState<'In Place' | 'Misplaced'>('In Place');
+
+  const { toast } = useToast();
 
   // This is a temporary solution to re-sync state since we are not using a proper state manager.
   // In a real app, you'd use a state management library or context.
   useState(() => {
     const interval = setInterval(() => {
-      if (items.length !== allItems.length) {
-        setItems([...allItems]);
-      }
-    }, 1000);
+      setItems([...allItems]);
+    }, 500);
     return () => clearInterval(interval);
   });
+  
+  const resetAddItemForm = () => {
+    setNewItemName('');
+    setNewItemOwner('');
+    setNewItemLocation('');
+    setNewItemStatus('In Place');
+  };
+
+  const handleAddNewItem = () => {
+    if (!newItemName.trim() || !newItemOwner.trim() || !newItemLocation.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please fill out all required fields.",
+      });
+      return;
+    }
+
+    const newItem: Item = {
+      id: `item-${Date.now()}`,
+      name: newItemName,
+      owner: newItemOwner,
+      location: newItemLocation,
+      status: newItemStatus,
+      hasTag: false, 
+    };
+    
+    allItems.unshift(newItem); // Add to the beginning of the list
+    setItems([...allItems]);
+    resetAddItemForm();
+    setIsAddItemDialogOpen(false);
+  };
 
 
   return (
@@ -53,11 +111,84 @@ export default function Home() {
         </p>
       </header>
       <Card>
-        <CardHeader>
-          <CardTitle>All Items</CardTitle>
-          <CardDescription>
-            Manage your family's belongings and their current status.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex flex-col">
+              <CardTitle>All Items</CardTitle>
+              <CardDescription>
+                Manage your family's belongings and their current status.
+              </CardDescription>
+            </div>
+             <Dialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="-ml-1 mr-2 h-4 w-4" />
+                  Add New Item
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Add New Item</DialogTitle>
+                  <DialogDescription>
+                    Track a new item by providing its details below.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="item-name" className="text-right">Name</Label>
+                    <Input
+                      id="item-name"
+                      value={newItemName}
+                      onChange={(e) => setNewItemName(e.target.value)}
+                      placeholder="e.g., TV Remote"
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="item-owner" className="text-right">Owner</Label>
+                    <Select onValueChange={setNewItemOwner} value={newItemOwner}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select an owner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {profiles.map((p) => (
+                          <SelectItem key={p.id} value={p.name}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="item-location" className="text-right">Location</Label>
+                    <Input
+                      id="item-location"
+                      value={newItemLocation}
+                      onChange={(e) => setNewItemLocation(e.target.value)}
+                      placeholder="e.g., Living Room"
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="item-status" className="text-right">Status</Label>
+                    <Select onValueChange={(value) => setNewItemStatus(value as 'In Place' | 'Misplaced')} value={newItemStatus}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="In Place">In Place</SelectItem>
+                        <SelectItem value="Misplaced">Misplaced</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline" onClick={resetAddItemForm}>Cancel</Button>
+                  </DialogClose>
+                  <Button onClick={handleAddNewItem}>Add Item</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
         </CardHeader>
         <CardContent>
           <Table>
@@ -111,4 +242,3 @@ export default function Home() {
     </div>
   );
 }
-
