@@ -6,52 +6,17 @@
  *   routines, essential items, and the current state of tracked items.
  *
  * - generateReminders - A function that handles the reminder generation process.
- * - GenerateRemindersInput - The input type for the generateReminders function.
- * - GenerateRemindersOutput - The return type for the generateReminders function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import type { Profile, Item } from '@/lib/data';
+import {
+  GenerateRemindersInputSchema,
+  GenerateRemindersOutputSchema,
+  type GenerateRemindersInput,
+  type GenerateRemindersOutput,
+} from './schemas';
 
-const ProfileSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  role: z.string(),
-  avatar: z.string(),
-  routine: z.string(),
-  essentials: z.array(z.string()),
-});
-
-const ItemSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  owner: z.string(),
-  location: z.string(),
-  status: z.enum(['In Place', 'Misplaced']),
-  hasTag: z.boolean(),
-});
-
-export const GenerateRemindersInputSchema = z.object({
-  profiles: z.array(ProfileSchema).describe('An array of user profiles.'),
-  items: z.array(ItemSchema).describe('An array of all tracked items.'),
-  currentTime: z.string().describe('The current time in ISO format.'),
-});
-export type GenerateRemindersInput = z.infer<typeof GenerateRemindersInputSchema>;
-
-export const ReminderSchema = z.object({
-    profileName: z.string().describe("The name of the profile the reminder is for."),
-    title: z.string().describe("A short, catchy title for the reminder."),
-    suggestion: z.string().describe("The detailed reminder or suggestion."),
-});
-export type Reminder = z.infer<typeof ReminderSchema>;
-
-export const GenerateRemindersOutputSchema = z.object({
-  reminders: z.array(ReminderSchema),
-});
-export type GenerateRemindersOutput = z.infer<
-  typeof GenerateRemindersOutputSchema
->;
+export { type GenerateRemindersInput, type GenerateRemindersOutput, type Reminder } from './schemas';
 
 export async function generateReminders(
   input: GenerateRemindersInput

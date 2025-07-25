@@ -6,38 +6,17 @@
  *   characteristics, time of day, user habits, and other relevant factors.
  *
  * - predictLocation - A function that handles the location prediction process.
- * - PredictLocationInput - The input type for the predictLocation function.
- * - PredictLocationOutput - The return type for the predictLocation function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {
+  PredictLocationInputSchema,
+  PredictLocationOutputSchema,
+  type PredictLocationInput,
+  type PredictLocationOutput,
+} from './schemas';
 
-const PredictLocationInputSchema = z.object({
-  itemCharacteristics: z
-    .string()
-    .describe('Characteristics of the item, such as size and color.'),
-  timeOfDay: z.string().describe('The current time of day.'),
-  userHabits: z.string().describe('The user\'s habits related to item usage.'),
-  additionalContext: z
-    .string()
-    .optional()
-    .describe('Any additional context that might be relevant.'),
-});
-export type PredictLocationInput = z.infer<typeof PredictLocationInputSchema>;
-
-const PredictLocationOutputSchema = z.object({
-  predictedLocation: z
-    .string()
-    .describe('The predicted location of the misplaced item.'),
-  confidenceLevel: z
-    .number()
-    .describe('A number representing the confidence level (0-1) of the prediction.'),
-  reasoning: z
-    .string()
-    .describe('The reasoning behind the predicted location.'),
-});
-export type PredictLocationOutput = z.infer<typeof PredictLocationOutputSchema>;
+export { type PredictLocationInput, type PredictLocationOutput } from './schemas';
 
 export async function predictLocation(
   input: PredictLocationInput
