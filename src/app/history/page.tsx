@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -35,6 +36,11 @@ import { Badge } from '@/components/ui/badge';
 export default function HistoryPage() {
   const [date, setDate] = React.useState<DateRange | undefined>();
   const [user, setUser] = React.useState<string>('all');
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const filteredHistory = history.filter((item) => {
     const itemDate = new Date(item.date);
@@ -134,7 +140,7 @@ export default function HistoryPage() {
               {filteredHistory.length > 0 ? (
                 filteredHistory.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{format(new Date(item.date), 'PPp')}</TableCell>
+                    <TableCell>{isClient ? format(new Date(item.date), 'PPp') : ''}</TableCell>
                     <TableCell>{item.item}</TableCell>
                     <TableCell>{item.user}</TableCell>
                     <TableCell>{item.location}</TableCell>
