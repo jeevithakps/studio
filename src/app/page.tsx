@@ -58,6 +58,7 @@ type RoutineCheck = {
 
 function LocationVerification() {
   const [pendingChecks, setPendingChecks] = useState<RoutineCheck[]>([]);
+  const [confirmedItems, setConfirmedItems] = useState<Record<string, string[]>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -81,7 +82,6 @@ function LocationVerification() {
         const routineTime = new Date();
         routineTime.setHours(hours, minutes, 0, 0);
 
-        // Check if routine time was within the last few hours but not in the future
         if (now > routineTime && (now.getTime() - routineTime.getTime()) < 4 * 60 * 60 * 1000) {
            newPendingChecks.push({ profile, time: routineTime });
         }
@@ -89,13 +89,24 @@ function LocationVerification() {
     });
     setPendingChecks(newPendingChecks);
   }, []);
+  
+  const handleConfirmItem = (profileId: string, itemName: string) => {
+    setConfirmedItems(prev => {
+      const userConfirmed = prev[profileId] || [];
+      const updated = { ...prev, [profileId]: [...userConfirmed, itemName] };
 
-  const handleConfirmLocation = (profileId: string) => {
-    setPendingChecks(prev => prev.filter(p => p.profile.id !== profileId));
-     toast({
-        title: "Locations Verified",
-        description: `Thanks for confirming the locations for ${pendingChecks.find(p => p.profile.id === profileId)?.profile.name}'s items.`,
-      });
+      const profile = profiles.find(p => p.id === profileId);
+      if (profile && profile.essentials.every(item => updated[profileId].includes(item))) {
+        toast({
+          title: `All items verified for ${profile.name}!`,
+          description: "Thank you for keeping everything up-to-date.",
+        });
+        // Filter out the completed profile check
+        setPendingChecks(currentChecks => currentChecks.filter(check => check.profile.id !== profileId));
+      }
+
+      return updated;
+    });
   };
   
   if (pendingChecks.length === 0) return null;
@@ -110,20 +121,30 @@ function LocationVerification() {
               Location Check for {profile.name}
             </CardTitle>
             <CardDescription>
-              It looks like {profile.name} has returned. Time to verify the location of their essential items.
+              It looks like {profile.name} has returned. Please confirm the location of their essential items.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ul className="text-sm list-disc list-inside text-muted-foreground">
-              {profile.essentials.map(item => <li key={item}>{item}</li>)}
-            </ul>
+          <CardContent className="flex flex-col gap-3">
+             {profile.essentials.map(item => {
+                const isConfirmed = confirmedItems[profile.id]?.includes(item);
+                return (
+                  <div key={item} className="flex justify-between items-center bg-background/50 p-3 rounded-md">
+                    <span className="font-medium">{item}</span>
+                    <Button 
+                      size="sm"
+                      onClick={() => handleConfirmItem(profile.id, item)}
+                      disabled={isConfirmed}
+                    >
+                      {isConfirmed ? (
+                        <>
+                          <CheckCircle className="mr-2 h-4 w-4"/> Confirmed
+                        </>
+                      ) : 'Confirm'}
+                    </Button>
+                  </div>
+                )
+             })}
           </CardContent>
-          <CardFooter>
-            <Button onClick={() => handleConfirmLocation(profile.id)}>
-              <CheckCircle className="mr-2 h-4 w-4"/>
-              Confirm Locations
-            </Button>
-          </CardFooter>
         </Card>
       ))}
     </div>
