@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
-import { MoreHorizontal, Tag, Plus } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { MoreHorizontal, Tag, Plus, MapPin, CheckCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { allItems, type Item, profiles } from "@/lib/data";
+import { allItems, type Item, profiles, type Profile } from "@/lib/data";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +50,85 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 
+type RoutineCheck = {
+  profile: Profile;
+  time: Date;
+}
+
+function LocationVerification() {
+  const [pendingChecks, setPendingChecks] = useState<RoutineCheck[]>([]);
+
+  useEffect(() => {
+    const now = new Date();
+    const newPendingChecks: RoutineCheck[] = [];
+
+    profiles.forEach(profile => {
+      const returnTimeMatch = profile.routine.match(/Returns at ([\d]{1,2}:[\d]{2} [AP]M)/);
+      if (returnTimeMatch) {
+        const timeString = returnTimeMatch[1];
+        const [time, period] = timeString.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+        
+        if (period.toLowerCase() === 'pm' && hours < 12) {
+          hours += 12;
+        }
+        if (period.toLowerCase() === 'am' && hours === 12) {
+          hours = 0;
+        }
+
+        const routineTime = new Date();
+        routineTime.setHours(hours, minutes, 0, 0);
+
+        // Check if routine time was within the last few hours but not in the future
+        if (now > routineTime && (now.getTime() - routineTime.getTime()) < 4 * 60 * 60 * 1000) {
+           newPendingChecks.push({ profile, time: routineTime });
+        }
+      }
+    });
+    setPendingChecks(newPendingChecks);
+  }, []);
+
+  const handleConfirmLocation = (profileId: string) => {
+    setPendingChecks(prev => prev.filter(p => p.profile.id !== profileId));
+     toast({
+        title: "Locations Verified",
+        description: `Thanks for confirming the locations for ${pendingChecks.find(p => p.profile.id === profileId)?.profile.name}'s items.`,
+      });
+  };
+  
+  if (pendingChecks.length === 0) return null;
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {pendingChecks.map(({ profile }) => (
+        <Card key={profile.id} className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="text-blue-500"/>
+              Location Check for {profile.name}
+            </CardTitle>
+            <CardDescription>
+              It looks like {profile.name} has returned. Time to verify the location of their essential items.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="text-sm list-disc list-inside text-muted-foreground">
+              {profile.essentials.map(item => <li key={item}>{item}</li>)}
+            </ul>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={() => handleConfirmLocation(profile.id)}>
+              <CheckCircle className="mr-2 h-4 w-4"/>
+              Confirm Locations
+            </Button>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+
 export default function Home() {
   const [items, setItems] = useState<Item[]>(allItems);
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
@@ -62,7 +141,7 @@ export default function Home() {
 
   // This is a temporary solution to re-sync state since we are not using a proper state manager.
   // In a real app, you'd use a state management library or context.
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setItems([...allItems]);
     }, 500);
@@ -110,6 +189,9 @@ export default function Home() {
           A real-time overview of all your tracked items.
         </p>
       </header>
+
+      <LocationVerification />
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div className="flex flex-col">
