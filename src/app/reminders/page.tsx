@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { generateReminders } from '@/actions/reminders';
+import { getReminders } from '@/actions/reminders';
 import { type Reminder } from '@/ai/flows/generate-reminders';
 import { Bell, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
 import { profiles, allItems } from '@/lib/data';
@@ -19,7 +20,7 @@ export default function RemindersPage() {
     setIsLoading(true);
     setReminders([]);
     try {
-      const result = await generateReminders({
+      const result = await getReminders({
         profiles,
         items: allItems,
         currentTime: new Date().toISOString(),
