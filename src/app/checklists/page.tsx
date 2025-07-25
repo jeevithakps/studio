@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -49,6 +48,10 @@ export default function ChecklistsPage() {
   const [newChecklistDesc, setNewChecklistDesc] = useState('');
   const [newChecklistItems, setNewChecklistItems] = useState<string[]>(['']);
 
+  const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
+  const [newItemText, setNewItemText] = useState('');
+  const [editingChecklistId, setEditingChecklistId] = useState<string | null>(null);
+
   const handleCheckboxChange = (checklistId: string, itemId: string) => {
     const key = `${checklistId}-${itemId}`;
     setCheckedItems((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -83,11 +86,11 @@ export default function ChecklistsPage() {
     setNewChecklistItems(updatedItems);
   };
 
-  const handleAddItem = () => {
+  const handleAddItemToNewChecklist = () => {
     setNewChecklistItems([...newChecklistItems, '']);
   };
 
-  const handleRemoveItem = (index: number) => {
+  const handleRemoveItemFromNewChecklist = (index: number) => {
     if (newChecklistItems.length > 1) {
       const updatedItems = newChecklistItems.filter((_, i) => i !== index);
       setNewChecklistItems(updatedItems);
@@ -120,6 +123,32 @@ export default function ChecklistsPage() {
     setNewChecklistItems(['']);
   };
 
+  const handleOpenAddItemDialog = (checklistId: string) => {
+    setEditingChecklistId(checklistId);
+    setIsAddItemDialogOpen(true);
+  };
+  
+  const handleConfirmAddItem = () => {
+    if (!newItemText.trim() || !editingChecklistId) return;
+  
+    setChecklists(prevChecklists =>
+      prevChecklists.map(list => {
+        if (list.id === editingChecklistId) {
+          const newItem: ChecklistItem = {
+            id: `item-${Date.now()}`,
+            name: newItemText,
+          };
+          return { ...list, items: [...list.items, newItem] };
+        }
+        return list;
+      })
+    );
+  
+    setNewItemText('');
+    setEditingChecklistId(null);
+    setIsAddItemDialogOpen(false);
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -131,12 +160,12 @@ export default function ChecklistsPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {checklists.map((list) => (
-          <Card key={list.id}>
+          <Card key={list.id} className="flex flex-col">
             <CardHeader>
               <CardTitle>{list.title}</CardTitle>
               <CardDescription>{list.description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
+            <CardContent className="flex flex-col gap-4 flex-grow">
               {list.items.map((item) => {
                 const key = `${list.id}-${item.id}`;
                 return (
@@ -156,9 +185,12 @@ export default function ChecklistsPage() {
                 );
               })}
             </CardContent>
-            <CardFooter>
-              <Button onClick={() => handleComplete(list.id)} className="w-full">
+            <CardFooter className="flex justify-between">
+              <Button onClick={() => handleComplete(list.id)} className="flex-grow">
                 Complete
+              </Button>
+               <Button variant="outline" size="icon" className="ml-2" onClick={() => handleOpenAddItemDialog(list.id)}>
+                <Plus className="h-4 w-4" />
               </Button>
             </CardFooter>
           </Card>
@@ -221,7 +253,7 @@ export default function ChecklistsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveItem(index)}
+                        onClick={() => handleRemoveItemFromNewChecklist(index)}
                         disabled={newChecklistItems.length <= 1}
                       >
                         <X className="h-4 w-4" />
@@ -229,7 +261,7 @@ export default function ChecklistsPage() {
                     </div>
                   ))}
                 </div>
-                <Button variant="outline" size="sm" onClick={handleAddItem} className="mt-2">
+                <Button variant="outline" size="sm" onClick={handleAddItemToNewChecklist} className="mt-2">
                   <Plus className="mr-2 h-4 w-4" /> Add Item
                 </Button>
               </div>
@@ -243,6 +275,33 @@ export default function ChecklistsPage() {
           </DialogContent>
         </Dialog>
       </div>
+      
+      <Dialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Item</DialogTitle>
+            <DialogDescription>
+              Enter the name of the new item you want to add to the checklist.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Label htmlFor="new-item-name">Item Name</Label>
+            <Input
+              id="new-item-name"
+              value={newItemText}
+              onChange={(e) => setNewItemText(e.target.value)}
+              placeholder="e.g., Sunscreen"
+            />
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleConfirmAddItem}>Add Item</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
