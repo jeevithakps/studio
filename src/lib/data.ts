@@ -1,3 +1,4 @@
+
 export type Profile = {
   id: string;
   name: string;
@@ -16,11 +17,17 @@ export type Item = {
   hasTag: boolean;
 };
 
+export type ChecklistItem = {
+  id: string;
+  name: string;
+  checked?: boolean;
+};
+
 export type Checklist = {
   id: string;
   title: string;
   description: string;
-  items: { id: string; name: string }[];
+  items: ChecklistItem[];
 };
 
 export type HistoryItem = {
@@ -110,7 +117,7 @@ export const allItems: Item[] = [
   },
 ];
 
-export const checklists: Checklist[] = [
+export const checklistsData: Checklist[] = [
     {
         id: 'cl-1',
         title: 'Morning School Run',
