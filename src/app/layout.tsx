@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Home, CheckSquare, Users, History, Sparkles } from 'lucide-react';
+import { Home, CheckSquare, Users, History, Sparkles, Bell } from 'lucide-react';
 
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset } from '@/components/ui/sidebar';
@@ -72,6 +72,14 @@ export default function RootLayout({
                     <SidebarMenuButton tooltip="Predict Location">
                       <Sparkles />
                       <span>Predict Location</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+                 <SidebarMenuItem>
+                  <Link href="/reminders" passHref>
+                    <SidebarMenuButton tooltip="Reminders">
+                      <Bell />
+                      <span>Reminders</span>
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
