@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, X, Edit } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -65,7 +65,21 @@ export default function ToDoPage() {
   const [newItemStatus, setNewItemStatus] = useState<'In Place' | 'Misplaced'>('In Place');
   const [editingChecklistId, setEditingChecklistId] = useState<string | null>(null);
 
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingChecklist, setEditingChecklist] = useState<Checklist | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editItems, setEditItems] = useState<ChecklistItem[]>([]);
+
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (editingChecklist) {
+      setEditTitle(editingChecklist.title);
+      setEditDesc(editingChecklist.description);
+      setEditItems([...editingChecklist.items]);
+    }
+  }, [editingChecklist]);
 
   const handleCheckboxChange = (checklistId: string, itemId: string) => {
     const key = `${checklistId}-${itemId}`;
@@ -113,13 +127,12 @@ export default function ToDoPage() {
         mainItem.status = 'Misplaced';
         itemsMarkedCount++;
         
-        // Add to history
         const historyEntry: HistoryItem = {
           id: `h-${Date.now()}-${mainItem.id}`,
           date: new Date().toISOString(),
           item: mainItem.name,
-          user: mainItem.owner, // Or a generic user if not applicable
-          location: mainItem.location, // Location where it was last seen
+          user: mainItem.owner, 
+          location: mainItem.location, 
           status: 'Misplaced',
         };
         history.unshift(historyEntry);
@@ -235,6 +248,46 @@ export default function ToDoPage() {
     setIsAddItemDialogOpen(false);
   };
 
+  const handleOpenEditDialog = (checklist: Checklist) => {
+    setEditingChecklist(checklist);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateChecklist = () => {
+    if (!editingChecklist) return;
+
+    const updatedChecklist = {
+      ...editingChecklist,
+      title: editTitle,
+      description: editDesc,
+      items: editItems.filter(item => item.name.trim() !== '')
+    };
+    
+    const index = checklistsData.findIndex(c => c.id === editingChecklist.id);
+    if (index !== -1) {
+      checklistsData[index] = updatedChecklist;
+      setChecklists([...checklistsData]);
+    }
+    
+    setEditingChecklist(null);
+    setIsEditDialogOpen(false);
+  };
+
+  const handleEditItemChange = (index: number, value: string) => {
+    const updatedItems = [...editItems];
+    updatedItems[index].name = value;
+    setEditItems(updatedItems);
+  };
+
+  const handleAddItemToEditChecklist = () => {
+    setEditItems([...editItems, { id: `new-${Date.now()}`, name: '' }]);
+  };
+
+  const handleRemoveItemFromEditChecklist = (index: number) => {
+    const updatedItems = editItems.filter((_, i) => i !== index);
+    setEditItems(updatedItems);
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -248,8 +301,15 @@ export default function ToDoPage() {
         {checklists.map((list) => (
           <Card key={list.id} className="flex flex-col">
             <CardHeader>
-              <CardTitle>{list.title}</CardTitle>
-              <CardDescription>{list.description}</CardDescription>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>{list.title}</CardTitle>
+                  <CardDescription>{list.description}</CardDescription>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(list)}>
+                    <Edit className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 flex-grow">
               {list.items.map((item) => {
@@ -361,7 +421,7 @@ export default function ToDoPage() {
           </DialogContent>
         </Dialog>
       </div>
-      
+
       <Dialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -427,7 +487,71 @@ export default function ToDoPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit To-Do List</DialogTitle>
+            <DialogDescription>
+              Update the details for your to-do list.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-title" className="text-right">
+                Title
+              </Label>
+              <Input
+                id="edit-title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-description" className="text-right">
+                Description
+              </Label>
+              <Textarea
+                id="edit-description"
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div>
+              <Label className="mb-2 block">Required Items</Label>
+              <div className="flex flex-col gap-2">
+                {editItems.map((item, index) => (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <Input
+                      value={item.name}
+                      onChange={(e) => handleEditItemChange(index, e.target.value)}
+                      placeholder={`Item ${index + 1}`}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveItemFromEditChecklist(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button variant="outline" size="sm" onClick={handleAddItemToEditChecklist} className="mt-2">
+                <Plus className="mr-2 h-4 w-4" /> Add Item
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleUpdateChecklist}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
@@ -446,3 +570,5 @@ export default function ToDoPage() {
     </div>
   );
 }
+
+    
