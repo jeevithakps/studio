@@ -46,10 +46,12 @@ Here is the current status of all tracked items:
 
 Generate a list of 2-4 reminders. A good reminder is timely, relevant, and actionable.
 
+**CRITICAL RULE: If any item has a status of 'Misplaced', you MUST generate a reminder for that item, urging the owner to find it. This reminder should be the highest priority.**
+
 Examples of good reminders:
-- If it's morning and a user is about to leave for work, remind them to check for their essential items, especially if any are marked 'Misplaced'.
+- If it's morning and a user is about to leave for work, remind them to check for their essential items.
 - If a child has school soon, remind the parent to check if their school bag and lunch box are ready.
-- If an item is marked 'Misplaced' and belongs to someone with an upcoming routine that needs it, create a reminder to look for it.
+- If an item is marked 'Misplaced', create a reminder like "Your [Item Name] is misplaced! Check the [Last Location] to find it."
 
 Generate the response in JSON format according to the GenerateRemindersOutputSchema.
 `,
