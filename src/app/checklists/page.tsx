@@ -116,8 +116,9 @@ export default function ChecklistsPage() {
           name: item,
         })),
     };
-
-    setChecklists([...checklists, newChecklist]);
+    
+    checklistsData.push(newChecklist);
+    setChecklists([...checklistsData]);
     resetCreateForm();
     setIsCreateDialogOpen(false);
   };
@@ -135,19 +136,17 @@ export default function ChecklistsPage() {
   
   const handleConfirmAddItem = () => {
     if (!newItemText.trim() || !editingChecklistId) return;
-  
-    setChecklists(prevChecklists =>
-      prevChecklists.map(list => {
-        if (list.id === editingChecklistId) {
-          const newItem: ChecklistItem = {
+    
+    const list = checklistsData.find(list => list.id === editingChecklistId);
+
+    if (list) {
+        const newItem: ChecklistItem = {
             id: `item-${Date.now()}`,
             name: newItemText,
-          };
-          return { ...list, items: [...list.items, newItem] };
-        }
-        return list;
-      })
-    );
+        };
+        list.items.push(newItem);
+        setChecklists([...checklistsData]);
+    }
   
     setNewItemText('');
     setEditingChecklistId(null);
